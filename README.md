@@ -1,36 +1,203 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 SMU Sugang Simulator (상명대 수강신청 시뮬레이터)
 
-## Getting Started
+상명대학교 수강신청 시스템의 **실제 UX/UI 흐름과 "심리적 압박감"**을 최대한 비슷하게 구현한 수강신청 연습용 시뮬레이터 웹사이트입니다.
 
-First, run the development server:
+- ✅ **목적:** "수강신청 시작 전에 로그인해버려서 신청 버튼이 안 뜨는 상황" 체험
+- ✅ **목적:** "정각에 클릭해도 서버 딜레이로 늦게 들어가는 느낌" 체험
+- ✅ **목적:** "신청 버튼 클릭 후 랜덤 처리시간으로 긴장감" 체험
+- ✅ 실제 수강신청 전, **클릭 타이밍 연습 + UI 적응 + 멘탈 연습** 가능
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🔗 Demo (Vercel)
+
+**Production Domain:** [https://smu-sugang-trainer.vercel.app](https://smu-sugang-trainer.vercel.app/)
+
+배포 주소는 Vercel 대시보드에서도 확인할 수 있습니다.
+
+---
+
+## 🧩 주요 기능 요약
+
+### ✅ 1) 수강신청 목표 시간 설정
+
+- 사용자가 수강신청 **목표 시간(Target Time)** 을 지정할 수 있음 (기본: 오늘 10:00:00)
+- **로그인 판정 기준**은 "로그인 버튼 클릭 순간의 시간"(가짜 시계 기준)으로 함
+- 로그인 처리 딜레이가 있어도 **클릭 시각 기준**으로 판정이 고정됨
+
+### ✅ 2) 조기 로그인 감지 (Early Bird Mode)
+
+- 목표 시간보다 **1ms라도 빠르게** 로그인 버튼을 클릭하면 **조기 로그인**으로 판정
+- 조기 로그인 시:
+  - 로그인은 되지만
+  - 메인 페이지에서 **신청 버튼이 아예 표시되지 않음** (`-` 로 표시)
+  - 실제 수강신청의 당혹감을 그대로 체험 가능
+
+### ✅ 3) 로그인 지연 시뮬레이션 (실제 서버 부하 느낌)
+
+- 로그인 버튼 클릭 시 로딩 창이 뜨고 딜레이 발생
+- **목표 시간 이전 조기 로그인:** 5초 고정 딜레이
+- **목표 시간 이후 정상 로그인:** 5~40초 랜덤 딜레이
+
+### ✅ 4) 신청 처리 지연(Apply Delay) 시뮬레이션
+
+- 과목 **"신청"** 버튼 클릭 시 실제 시스템처럼 처리 시간이 걸리는 연출
+- **신청 딜레이:** 1.5~8초 랜덤
+- 신청 후:
+  - 신청내역 테이블에 과목 등록
+  - 신청 시각 기록
+  - 학점 합계 자동 계산
+
+### ✅ 5) 수강신청 중복 방지 로직
+
+- **동일 과목 ID** 중복 신청 불가
+- **동일 과목명(다른 분반)** 중복 신청 불가
+
+### ✅ 6) UI/레이아웃을 실제 시스템처럼 구성
+
+- 좌측 메뉴 (장바구니조회, 나의주전공강좌, 교양강좌, 학과별강좌 등)
+- 우측 개설강좌 리스트
+- 공지 팝업
+- 신청 내역 영역
+
+실제 수강신청 사이트의 느낌을 유지하는 데 집중했습니다.
+
+---
+
+## 🖼️ 화면 구성
+
+| 화면 | 설명 |
+|------|------|
+| **1) 환경 설정 페이지** | 단과대학/학과/학년 선택, 목표 시간(10:00:00) 기준 "몇 초 전부터 시작할지" 설정 (5/10/15/20/30초) |
+| **2) 로그인 페이지** | 현재 시간(가짜 시계), 로그인 딜레이/로딩 연출 |
+| **3) 메인 페이지** | 개설강좌 리스트 조회, 신청/취소, 신청내역 + 학점 합계 |
+
+---
+
+## 📦 기술 스택
+
+| 구분 | 사용 기술 |
+|------|-----------|
+| Framework | Next.js (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Data | JSON 기반 과목 데이터 (`data/courses.json`) |
+| Deploy | Vercel |
+
+---
+
+## 📁 프로젝트 구조
+
+```
+smu-sugang-practice/
+├── app/
+│   ├── layout.tsx          # 메타데이터, 전역 레이아웃, Vercel Analytics
+│   ├── globals.css         # 전역 스타일
+│   ├── page.tsx            # 환경설정 + 로그인 페이지
+│   ├── main/
+│   │   └── page.tsx        # 메인 수강신청 페이지
+│   └── favicon.ico
+│
+├── data/
+│   └── courses.json        # 개설 강좌 데이터 (Mock)
+│
+├── public/                 # 정적 파일 (아이콘 등)
+├── package.json
+├── next.config.ts
+├── tsconfig.json
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧠 핵심 로직 설명
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ✅ 로그인 판정 (Early Bird)
 
-## Learn More
+- **클릭 순간의 "가짜 시계" 시각**을 기준으로 판별
+  - `clickSimTime` = 설정 완료 시점부터 흐른 시간을 반영한 시뮬레이션 시각
+  - `startMs` = 오늘 10:00:00 의 timestamp
+  - **isEarlyBird = clickSimTime < startMs**
 
-To learn more about Next.js, take a look at the following resources:
+**포인트:**  
+40초 로그인 딜레이가 있어도, **클릭한 그 순간의 시각** 기준으로 조기 로그인 여부가 고정됩니다.  
+즉, 늦게 들어가도 "나는 일찍 눌렀다"면 신청 버튼이 안 뜹니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### ✅ 조기 로그인 시 신청 버튼 숨김 처리
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+메인 페이지(`app/main/page.tsx`)에서:
 
-## Deploy on Vercel
+- `userInfo.isEarlyBird === true` 인 경우 **신청 버튼 UI 숨김**, `-` 표시
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```tsx
+{!userInfo.isEarlyBird ? (
+  <button onClick={() => handleApply(c)}>신청</button>
+) : (
+  <span className="...">-</span>
+)}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📊 Web Analytics (Vercel Analytics)
+
+방문자 수 / 페이지뷰 분석을 위해 **Vercel Web Analytics**를 적용했습니다.
+
+- **설치:** `npm i @vercel/analytics`
+- **적용:** `app/layout.tsx` 에서 `<Analytics />` 컴포넌트 사용
+
+⚠️ Adblock(광고 차단)이 켜져 있으면 데이터가 늦게 잡힐 수 있습니다.
+
+---
+
+## ⚙️ 실행 방법 (로컬)
+
+1. **설치**
+   ```bash
+   npm install
+   ```
+
+2. **개발 서버 실행**
+   ```bash
+   npm run dev
+   ```
+
+3. **접속**
+   - [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🚀 배포 방법 (Vercel)
+
+1. GitHub에 push
+2. Vercel에서 Repository Import
+3. 자동 빌드 & 배포
+
+✅ 배포 후 도메인은 **Vercel Settings → Domains**에서 확인 가능
+
+---
+
+## ✅ 사용 목적 / 추천 대상
+
+이 프로젝트는 다음에 유용합니다.
+
+- 수강신청 당일 **"로그인 타이밍"** 연습하고 싶은 학생
+- 수강신청 **UI에 미리 적응**하고 싶은 학생
+- **클릭 → 딜레이 → 신청 → 취소** 흐름을 미리 익히고 싶은 학생
+- 수강신청 시작 전에 **일찍 눌러버리는 실수**를 체험하고 싶은 학생
+
+---
+
+## ⚠️ 주의 사항
+
+- 본 프로젝트는 **연습용 시뮬레이터**입니다.
+- **실제 수강신청 서버와는 연결되지 않습니다.**
+- 과목 데이터는 `courses.json` 기반의 **모의 데이터**입니다.
+- 배포 대상이 학생일 경우, 혼동되지 않도록 안내문을 추가하는 것을 권장합니다.
+
+---
+
+## 👤 제작자
+
+- **이름:** 김기원
+- **프로젝트 목적:** 수강신청 실전 대비 UX 시뮬레이션 웹 제작
