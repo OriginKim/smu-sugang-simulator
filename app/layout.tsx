@@ -24,11 +24,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
+  <html lang="en">
+    <head>
+      <meta
+        name="google-site-verification"
+        content="GCUW21Ft4gN01ccnn3OA1vNMP9NpCipppskqUJxHz5M"
+      />
+    </head>
+
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {children}
+      <Analytics />
+    </body>
+  </html>
+);
+
 }
+
