@@ -404,21 +404,22 @@ export default function SugangMainPage() {
 
                   <tbody>
                     {appliedCourses.map((ac, i) => (
-                      <tr key={ac.id} className="h-8 border-b bg-[#fff9e6] text-black">
+                    <tr key={`${ac.id}-${ac.apply_date}`} className="h-8 border-b bg-[#fff9e6] text-black">
                         <td className="border-r text-gray-400">{i + 1}</td>
                         <td className="border-r px-1">
-                          <button
+                        <button
                             onClick={() => handleCancel(ac.id)}
                             className="bg-red-500 text-white w-full py-[1px] rounded-sm font-bold text-[9px] active:scale-95 shadow-md shadow-red-200"
-                          >
+                        >
                             취소
-                          </button>
+                        </button>
                         </td>
                         <td className="border-r text-left px-2 font-bold">{ac.name}</td>
                         <td className="border-r font-bold text-red-600">{ac.credit}</td>
                         <td className="text-[9px] text-gray-500 font-mono">{ac.apply_date}</td>
-                      </tr>
+                    </tr>
                     ))}
+
                   </tbody>
                 </table>
               </div>

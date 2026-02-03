@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ALL_COURSES from "../data/courses.json";
 
@@ -12,22 +12,51 @@ type UserInfo = {
   grade: string;
   name: string;
   studentId: string;
+
   isEarlyBird: boolean;
-  clickTime: number;     // 클릭 순간(판별 기준)
-  targetTimeStr: string; // 설정한 목표 시간 문자열(표시/디버깅용)
+  clickTime: number;      // 실제 클릭 시각(ms)
+  clickSimTime: number;   // 가짜 시계 클릭 시각(ms)
+
+  startTimeStr: string;   // 오늘 10:00:00
+  leadSeconds: number;
 };
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function buildTodayISO(timeOnly: string) {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = pad2(now.getMonth() + 1);
+  const dd = pad2(now.getDate());
+  return `${yyyy}-${mm}-${dd}T${timeOnly}`;
+}
 
 export default function LoginPage() {
   const [step, setStep] = useState<Step>("setup");
-  const [serverTime, setServerTime] = useState(new Date());
+  const [serverTime, setServerTime] = useState(new Date()); // login 화면에서만 "가짜 시간"로 갱신
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
-  const [targetTimeStr, setTargetTimeStr] = useState("2026-02-05T10:00:00");
+  // ✅ 수강신청 시작시간 고정(오늘 10:00:00)
+  const START_TIME_ONLY = "10:00:00";
+  const startTimeStr = useMemo(() => buildTodayISO(START_TIME_ONLY), []);
+  const startMs = useMemo(() => new Date(startTimeStr).getTime(), [startTimeStr]);
+
+  // ✅ 옵션: 몇 초 전부터 시작할지
+  const leadOptions = [5, 10, 15, 20, 30] as const;
+  const [leadSeconds, setLeadSeconds] = useState<number>(10);
+
+  // ✅ 가짜 시계 기준점(설정완료 순간에 세팅)
+  const baseRealMsRef = useRef<number>(0);
+  const baseSimMsRef = useRef<number>(0);
+
+  // setup 값들
   const [userCollege, setUserCollege] = useState("-대학선택-");
   const [userDept, setUserDept] = useState("-학과선택-");
   const [userGrade, setUserGrade] = useState("4학년");
-  const [studentId, setStudentId] = useState("202612345");
+  const [studentId, setStudentId] = useState("2026123456");
   const [password, setPassword] = useState("12345678");
 
   const colleges = [
@@ -45,13 +74,32 @@ export default function LoginPage() {
     return ["-학과선택-", ...Array.from(new Set(filtered.map((c: any) => c.dept)))];
   }, [userCollege]);
 
-  // 시계
+  // ✅ (중요) login 화면에서만 타이머를 돌린다
   useEffect(() => {
-    const timer = setInterval(() => setServerTime(new Date()), 30);
-    return () => clearInterval(timer);
-  }, []);
+    if (step !== "login") return;
 
-  // ✅ 로그인 클릭 시점 판별(딜레이로 시간 도달해도 판정 안 바뀜)
+    // "설정 완료"로 login 진입한 순간부터 시간이 흘러야 하므로,
+    // login 진입 시점의 기준점을 여기서 잡는다.
+    baseRealMsRef.current = Date.now();
+    baseSimMsRef.current = startMs - leadSeconds * 1000;
+
+    // 즉시 1회 반영
+    setServerTime(new Date(baseSimMsRef.current));
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - baseRealMsRef.current;
+      const simNow = baseSimMsRef.current + elapsed;
+      setServerTime(new Date(simNow));
+    }, 30);
+
+    return () => clearInterval(timer);
+  }, [step, startMs, leadSeconds]);
+
+  const handleCompleteSetup = () => {
+    // ✅ 여기서 바로 시간을 돌리지 않고, step이 login이 되었을 때 useEffect가 시작됨
+    setStep("login");
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -60,18 +108,19 @@ export default function LoginPage() {
       return;
     }
 
-    const clickTime = Date.now();
-    const targetTime = new Date(targetTimeStr).getTime();
+    const clickReal = Date.now();
 
-    // 1ms라도 빠르면 조기 로그인
-    const isEarlyBird = clickTime < targetTime;
+    // ✅ 가짜 시계 클릭 시각 계산(기준점이 아직 없을 수 있으니 안전하게)
+    const baseReal = baseRealMsRef.current || clickReal;
+    const baseSim = baseSimMsRef.current || (startMs - leadSeconds * 1000);
+    const clickSim = baseSim + (clickReal - baseReal);
+
+    // ✅ 판정은 "가짜 시계의 클릭 시각"이 10:00:00보다 빠른가
+    const isEarlyBird = clickSim < startMs;
 
     setIsProcessing(true);
 
-    // ✅ 조기 로그인: 5초 고정 / 정상 로그인: 5~40초 랜덤
-    const delay = isEarlyBird
-      ? 5000
-      : Math.floor(Math.random() * 35000) + 5000;
+    const delay = isEarlyBird ? 5000 : Math.floor(Math.random() * 35000) + 5000;
 
     setTimeout(() => {
       setIsProcessing(false);
@@ -83,8 +132,10 @@ export default function LoginPage() {
         name: "수뭉이",
         studentId,
         isEarlyBird,
-        clickTime,
-        targetTimeStr,
+        clickTime: clickReal,
+        clickSimTime: clickSim,
+        startTimeStr,
+        leadSeconds,
       };
 
       sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
@@ -107,15 +158,20 @@ export default function LoginPage() {
           <div className="space-y-6 text-black">
             <div>
               <label className="text-[12px] font-bold text-slate-500 ml-1 mb-2 block">
-                수강신청 목표 시간 (초까지 정확히)
+                몇 초 전부터 시작할까요? (10:00:00 기준)
               </label>
-              <input
-                type="datetime-local"
-                step="1"
-                value={targetTimeStr}
-                onChange={(e) => setTargetTimeStr(e.target.value)}
+
+              <select
+                value={String(leadSeconds)}
+                onChange={(e) => setLeadSeconds(Number(e.target.value))}
                 className="w-full border-2 border-slate-100 bg-slate-50 p-3.5 rounded-xl font-bold text-black outline-none focus:border-[#003d91]"
-              />
+              >
+                {leadOptions.map((sec) => (
+                  <option key={sec} value={sec}>
+                    {sec}초 전부터
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -164,7 +220,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={() => setStep("login")}
+            onClick={handleCompleteSetup}
             className="w-full bg-[#003d91] text-white py-4 rounded-xl font-bold mt-10 hover:bg-[#002d6b] shadow-lg"
           >
             설정 완료
@@ -176,7 +232,7 @@ export default function LoginPage() {
 
   // ===== login 화면 =====
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-slate-300 via-slate-100 to-slate-200 flex flex-col items-center justify-center p-6 font-sans">
       {isProcessing && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10 backdrop-blur-sm">
           <div className="bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center gap-6 min-w-[320px] border-2 border-[#1A2962]">
@@ -190,9 +246,9 @@ export default function LoginPage() {
       )}
 
       <div className="w-full max-w-[1100px]">
-        <div className="flex justify-center mb-12">
-          <img src="/logo_login_sugang.png" className="h-14 drop-shadow-sm" alt="logo" />
-        </div>
+        {/* <div className="flex justify-center mb-12">
+          <img src="/logo_login_sugang.png" className="h-14 drop-shadow-lg" alt="logo" />
+        </div> */}
 
         <div className="bg-white shadow-2xl rounded-3xl flex overflow-hidden border border-slate-100 min-h-[600px]">
           <div className="w-2/5 p-12 bg-[#f8fafc] border-r flex flex-col justify-between">
@@ -204,7 +260,7 @@ export default function LoginPage() {
 
               <div className="space-y-4">
                 <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">My Setup</p>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">MY SETUP</p>
                   <div className="space-y-2">
                     <p className="text-sm font-bold text-slate-700">{userDept}</p>
                     <p className="text-sm font-medium text-slate-500">{userGrade} 재학</p>
@@ -212,9 +268,14 @@ export default function LoginPage() {
                 </div>
 
                 <div className="p-5 bg-[#fff7f7] border border-red-100 rounded-2xl shadow-sm">
-                  <p className="text-[11px] font-black text-red-400 uppercase tracking-widest mb-1">Target Time</p>
+                  <p className="text-[11px] font-black text-red-400 uppercase tracking-widest mb-1">
+                    START TIME
+                  </p>
                   <p className="text-lg font-black text-red-600 font-mono">
-                    {new Date(targetTimeStr).toLocaleTimeString("ko-KR", { hour12: false })}
+                    {new Date(startTimeStr).toLocaleTimeString("ko-KR", { hour12: false })}
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-400 mt-2">
+                    가짜 시계: {leadSeconds}초 전부터 표시
                   </p>
                 </div>
               </div>
@@ -236,7 +297,7 @@ export default function LoginPage() {
 
             <div className="bg-slate-900 rounded-3xl border-[6px] border-slate-200 mb-10 h-[160px] flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
               <p className="text-[11px] font-black text-slate-500 mb-2 uppercase tracking-[0.3em] z-10">
-                Current Server Time
+                CURRENT SERVER TIME
               </p>
               <p className="text-[#ff4d4d] font-mono text-5xl font-black tracking-tighter tabular-nums z-10">
                 {serverTime.getHours()}시 {serverTime.getMinutes()}분 {serverTime.getSeconds()}초
