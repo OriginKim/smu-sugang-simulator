@@ -154,16 +154,17 @@ export default function SugangMainPage() {
 
   return (
     <div className="w-full h-screen flex flex-col bg-[#eff3f6] font-['Malgun_Gothic',sans-serif] overflow-hidden text-[#333]">
-      {isProcessing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10">
-          <div className="bg-white border-2 border-[#1A2962] p-6 shadow-2xl flex items-center gap-5 min-w-[300px]">
-            <div className="w-10 h-10 border-4 border-[#cbd5e1] border-t-[#1A2962] rounded-full animate-spin"></div>
-            <div className="text-[13px] font-bold leading-relaxed whitespace-pre-wrap text-black">
-              처리중입니다.{"\n"}잠시만 기다려주세요.
-            </div>
-          </div>
-        </div>
-      )}
+  {isProcessing && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10">
+      <div className="bg-white border-2 border-[#1A2962] p-6 shadow-2xl flex items-center gap-5 min-w-[300px]">
+        
+        <img src="/progress.gif" alt="처리중"  />
+
+        
+      </div>
+    </div>
+  )}
+
 
       <header className="h-[42px] bg-[#1A2962] flex items-center justify-between px-3 shrink-0 border-b border-black z-50">
         <span className="text-white font-bold text-[14px]">SANGMYUNG UNIVERSITY</span>
