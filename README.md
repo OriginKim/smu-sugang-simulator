@@ -32,9 +32,8 @@
 | 👥 Visitors | 👀 Page Views | 📉 Bounce Rate |
 | :---: | :---: | :---: |
 | **1,655** | **5,215** | **37%** |
+<img width="1094" height="545" alt="image" src="https://github.com/user-attachments/assets/cb695127-f643-43bf-84e2-a9c43a5b381e" />
 
-추가로, 유입 경로에서 **everytime.kr** 트래픽이 가장 크게 잡혀  
-실제로 많은 사용자가 접근한 것을 확인할 수 있었습니다.
 
 ---
 
