@@ -14,9 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SMU 수강신청 시뮬레이터",
-  description: "상명대학교 수강신청 연습용 시뮬레이터",
+  title: "상명대학교 수강신청 시뮬레이터 | SMU Sugang Trainer - OriginKim",
+  description: "상명대 sugang.smu.ac.kr 실제 타이밍 연습. 5~30초 전 시뮬레이션. 수강신청 꿀팁 공개!",
+  keywords: "상명대, 수강신청, smu, sugang, 시뮬레이터, trainer, 상명대학교",
+  openGraph: {
+    title: "상명대 수강신청 시뮬레이터",
+    description: "상명대 수강신청 연습용 트레이너",
+    url: "https://smu-sugang-trainer.vercel.app",
+    type: "website",
+  },
 };
+
 
 export default function RootLayout({
   children,
